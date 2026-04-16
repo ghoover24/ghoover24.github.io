@@ -1,6 +1,5 @@
 ---
-title: "Personal_Webpage"
+title: "Gaby Hoover"
 ---
 
-This is a Quarto website.
 
