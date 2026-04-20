@@ -1,5 +1,24 @@
 ---
-title: "Gaby Hoover"
+title: ""
+about: 
+  id: intro-heading
+  template: jolla
+  links: 
+    - icon: envelope
+      href: mailto:hoover7@stolaf.edu
+    - icon: github
+      href: https://github.com/ghoover24
 ---
 
+
+:::{#intro-heading}
+## Gaby Hoover
+she/her/hers
+
+### Personal
+
+
+### Contact Information
+
+**Email:** <a href='mailto:hoover7@stolaf.edu'>hoover7@stolaf.edu</a>
 
