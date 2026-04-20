@@ -1,8 +1,5 @@
 ---
 title: ""
-format:
-  dashboard:
-    theme: minty
 about: 
   id: intro-heading
   template: trestles
