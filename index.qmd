@@ -18,9 +18,10 @@ about:
 she/her
 
 ### Personal
-I am currently sophomore at St. Olaf College, double majoring in Psychology and Statistics & Data Scientist. I am also a clarinetist in both the St. Olaf Band and Orchestra. In my limited free time, I like to watch reality TV or dramas and knit (ask me about Survivor or The Sopranos!). 
+I am currently sophomore at St. Olaf College, double majoring in Psychology and Statistics & Data Scientist. I am also a clarinetist in both the St. Olaf Band and Orchestra. In my limited free time, I like to watch reality TV or dramas while knitting (ask me about Survivor or The Sopranos!). 
 
 ### Contact Information
 
 **Email:** <a href='mailto:hoover7@stolaf.edu'>hoover7@stolaf.edu</a>
 
+:::

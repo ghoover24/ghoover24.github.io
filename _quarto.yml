@@ -11,6 +11,10 @@ website:
       - about.qmd
       - mp1.qmd
       - maps.qmd
+  page-footer: 
+    right: This website is built with [Quarto](https://quarto.org/){target=_blank}
+    left: Find the source code to this website on my [GitHub](https://github.com/ghoover24/ghoover24.github.io){target=_blank}
+
 
 format:
   html:
