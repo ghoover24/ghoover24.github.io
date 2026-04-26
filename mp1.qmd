@@ -6,10 +6,10 @@ This is a text analysis I performed as part of a project for my data science 2 c
 
 # Analysis of Headlines Relating to Women
 ```{r, include = FALSE}
-library(tidyverse) # general
-library(wordcloud) # for word cloud
-library(tidytext) # for text analysis
-library(stringr) # for str functions
+library(tidyverse)  # general
+library(wordcloud)  # for word cloud
+library(tidytext)   # for text analysis
+library(stringr)    # for str functions
 
 headlines <- read_csv("~/SDS 264 Spring 2026/SDS_264_spring26/Projects/headlines.csv")
 
@@ -26,12 +26,15 @@ The data I will be using and analyzing includes all headlines from the top 50 ne
 I believe that by finding the most common words and the sentiments in these headlines, we can get a general idea of what is being reported about women and girls in the world. Do they report about women's successes, women's suffering, or maybe something in between?
 
 ```{r, include = FALSE, warning = FALSE}
-word <- c("woman", "women", "girl", "female", "lady", "girls", "women's", "ladies") # these words are more popular in this data set, yet do not reveal much information about the headlines
-feminine_words <- tibble(word)  # to be joined
+# these words are more popular in this data set, yet do not reveal much 
+  # information about the headlines (need to be removed)
+word <- c("woman", "women", "girl", "female", "lady", "girls", "women's", "ladies") 
 
+feminine_words <- tibble(word)          # to be joined
+ 
 headlines_no_stop <- headlines_tidy |>
-  anti_join(feminine_words) |> # remove feminine words
-  anti_join(stop_words) |> # remove stop words like "the"
+  anti_join(feminine_words) |>          # remove feminine words
+  anti_join(stop_words) |>              # remove stop words like "the"
   filter(!is.na(word))
 ```
 
@@ -43,7 +46,8 @@ To begin the analysis I want to start with a general look the structure of the h
 
 ```{r, echo = FALSE}
 headlines |>
-  mutate(length = str_length(headline_no_site))|> # find character length of headlines
+  mutate(length = str_length(headline_no_site))|> # find character length of 
+                                                    # headlines
   summarize(mean_length = mean(length), 
             min_length = min(length),
             max_length = max(length))
@@ -53,7 +57,8 @@ From this output, we can see the minimum, maximum, and mean length of headlines 
 
 ```{r, echo = FALSE}
 headlines |>
-  mutate(question = str_extract(headlines$headline_no_site, ".*\\?")) |> # find questions in headlines
+  # find questions in headlines
+  mutate(question = str_extract(headlines$headline_no_site, ".*\\?")) |> 
   select(question) |>
   filter(!is.na(question)) |>
   print(n = 5)
@@ -66,10 +71,12 @@ I also want to see what the most common words are that appear in headlines relat
 ```{r, echo = FALSE}
 headlines_no_stop |>
   count(word, sort = TRUE) |>
-  slice_max(n, n = 10) |> # top ten words in the headlines
-  ggplot(aes(x = fct_reorder(word, n), y = n)) + # so bars on the graph are in order of frequency
+  slice_max(n, n = 10) |>                         # top ten words in the 
+                                                    # headlines
+  ggplot(aes(x = fct_reorder(word, n), y = n)) +  # so bars on the graph are in 
+                                                    # order of frequency
   geom_col() +
-  coord_flip() + # more visually pleasing
+  coord_flip() +                                  # more visually pleasing
   labs(x = "Number of occurrences", 
        y = "Word",
        title = "Ten most common words in headlines related to women")
@@ -84,12 +91,14 @@ str_subset(headlines$headline_no_site, "sister") # to find example for analysis
 ```
 
 ```{r, include = FALSE}
-headlines_wordcloud <- headlines_no_stop |>  # create separate frame for the word cloud to include counts
+headlines_wordcloud <- headlines_no_stop |>  # create separate frame for the 
+                                                # word cloud to include counts
   count(word) |>
-  filter(!str_detect(word, "\\d"))  # remove any digits
+  filter(!str_detect(word, "\\d"))           # remove any digits
 ```
 
 ```{r, echo = FALSE, warning = FALSE}
+# word cloud!
 wordcloud(
   words = headlines_wordcloud$word, 
   freq = headlines_wordcloud$n, 
@@ -103,7 +112,8 @@ From the word cloud, we seem to see a lot more negative words than positive. Wor
 ### Sentiment Analysis
 
 ```{r, include = FALSE}
-bing_sentiments <- get_sentiments(lexicon = "bing") # to be joined with headlines data
+bing_sentiments <- get_sentiments(lexicon = "bing") # to be joined with 
+                                                      # headlines data
 ```
 
 In order to analyze and compare the negative words to the positive in headlines tagged with women, I used the bing sentiments lexicon. The bing lexicon only includes two sentiments: negative and positive. I joined these sentiments with the headlines tidy data to create the bar plot below. 
@@ -113,12 +123,13 @@ The graph illustrates the top ten common words from each sentiment. The comparis
 ```{r, echo = FALSE, warning = FALSE, message = FALSE, fig.alt = "This is a column plot faceted into two graphs by negative and positive sentiment. On the x-axis is the nymber of times the word has appeared in the headlines dataset. For the negative sentiment plot, the x-axis ranges from 0 to 8,000 times. For the positive sentiment plot, the x-axis ranges from 0 to 5,000 times. On the y-axis is word included in the headlines. The negative sentiment plot included the words death, killed, dies, dead, murder, raped, rape, attack, cancer, and died on the y-axis. The positive sentiment plot included the words trump, love, top, win, fans, free, wins, support, beauty, and beautiful on the y-axis. For each plot, the words were arranged from most frequent at the top to least frequent at the bottom. The orders in which the words were written above are orders they appear in on the plot, from most frequent to least frequent. The appearance of this plot shows how frequently each word appears in headlines relating to women. It also displays how negative words appear more in the dataset.", fig.width = 10}
 headlines_no_stop |>
   inner_join(bing_sentiments) |>
-  group_by(sentiment) |> # words are counted by sentiment and both sentiments are included in the slice_max()
+  group_by(sentiment) |> # words are counted by sentiment and both sentiments 
+                           # are included in the slice_max()
   count(word, sentiment, sort = TRUE) |>
   slice_max(n, n = 10) |> 
-  ggplot(aes(x = fct_reorder(word, n), y = n, fill = sentiment)) + # so bars on the graphs are in order of frequency
+  ggplot(aes(x = fct_reorder(word, n), y = n, fill = sentiment)) + 
   geom_col() +  
-  coord_flip() + # nicer visually 
+  coord_flip() +
   facet_wrap(~ sentiment, scales = "free") + # facet by sentiment
   labs(y = "Number of occurrences",
        x = "Word",
@@ -126,7 +137,9 @@ headlines_no_stop |>
 ```
 
 ```{r, eval = FALSE, include = FALSE}
-str_subset(headlines$headline_no_site, "beaut") # find examples of sentences that include "beauty" or "beautiful"
+str_subset(headlines$headline_no_site, "beaut") # find examples of sentences 
+                                                  # that include "beauty" or 
+                                                  # "beautiful"
 ```
 
 It is also important to note how the most common positive word: "trump." In the bing lexicon, "trump" is most likely a verb. However, since this data is from the years 2010 through 2020, we can assume "trump" in these headlines refers to Donald Trump. If we remove "trump" from this list, the word "helped" is now included with a total of 1,152 appearances.
@@ -134,7 +147,8 @@ It is also important to note how the most common positive word: "trump." In the 
 ```{r, include = FALSE, warning = FALSE}
 headlines_no_stop |>
   inner_join(bing_sentiments) |>
-  filter(word != "trump", # filter out the name "trump" as it is not insightful
+  filter(word != "trump",             # filter out the name "trump" as it is not
+                                        # insightful
          sentiment == "positive") |>
   count(word, sentiment, sort = TRUE) # to find the 11th most common positive word
 ```
@@ -145,7 +159,7 @@ From the plot, you can also see that there are a lot more words with negative se
 headlines_no_stop |>
   inner_join(bing_sentiments) |> 
   group_by(sentiment) |>
-  count(sentiment) # find the number of words per sentiment 
+  count(sentiment)         # find the number of words per sentiment 
 
 212979 / (212979 + 104764) # calculate proportion of negative words
 ```
@@ -161,9 +175,12 @@ headlines_no_stop |>
 I am also curious about what the general sentiment of headlines related to women that also include the words "men" or "man" in them. From the outputted tibble below, it is clear that the most common words in these headlines are negative, and like in the previous sentiment analysis, quite sensitive and disturbing. Since these are the kind of words included in articles tagged with both men and women, one can assume that these acts of violence are being committed against one of the genders by the other. It can be inferred in today's context that men are the perpetrators of these acts. What does that say about how men are treating women and how news sources are reporting on it?
 
 ```{r, echo = FALSE, warning = FALSE, message = FALSE}
+
+# detect any headlines that include "man" or "men" separate from "wo<men>"
 headlines |>
-  filter(str_detect(headlines$headline_no_site, " m[ea]n ")) |> # detect any headlines that include "man" or "men" separate from "wo<men>"
-  unnest_tokens(output = word, input = headline_no_site) |> # make every word its own row
+  filter(str_detect(headlines$headline_no_site, " m[ea]n ")) |> 
+  unnest_tokens(output = word, input = headline_no_site) |> # make every word 
+                                                              # its own row
   anti_join(feminine_words) |>
   anti_join(stop_words) |>
   filter(!str_detect(word, "\\d")) |> # remove any digits

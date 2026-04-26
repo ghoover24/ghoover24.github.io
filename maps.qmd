@@ -11,6 +11,8 @@ These are a few plots I made as a part of a homework assignment for my data scie
 #| warning: false
 #| echo: false
 
+# load needed libraries
+
 library(tidyverse)
 library(leaflet)
 library(sf)
@@ -26,12 +28,11 @@ library(htmltools)
 #| warning: false
 #| echo: false
 
-# Get info to draw US states for geom_polygon (connect the lat-long points)
+# Get info to draw US states for geom_polygon 
 states_polygon <- as_tibble(map_data("state")) |>
   select(region, group, order, lat, long)
 
-# Get info to draw US states for geom_sf and leaflet (simple features object 
-#   with multipolygon geometry column)
+# Get info to draw US states for geom_sf and leaflet 
 states_sf <- 
   read_sf("https://rstudio.github.io/leaflet/json/us-states.geojson") |>
   select(name, geometry)
@@ -42,53 +43,67 @@ polisci_data <- as_tibble(poliscidata::states) |>
 
 ```
 
-## Motor Vehicle Fatalities Across America
-
 ```{r}
 #| echo: false
 #| message: false
-# states_polygon
+
+# Clean all data sets in preparation of merging them
+
+## states_polygon
 states_polygon <- states_polygon |>
-  rename(state = region) |>
-  filter(!state %in% c("district of columbia")) |>
-  mutate(state = str_replace_all(state, " ", ""))
+  rename(state = region) |>                        # needs consistent col. name
+  filter(!state %in% c("district of columbia")) |> # remove inconsistent region 
+  mutate(state = str_replace_all(state, " ", ""))  # no more spaces!
 
-# state_sf
+## state_sf
 states_sf <- states_sf |> 
-  mutate(name = str_replace_all(name, " ", "")) |>
-  rename(state = name)
+  mutate(name = str_replace_all(name, " ", "")) |> # no more spaces!
+  rename(state = name) |>                          # consistent name 
+  filter(!state %in% c("Alaska", 
+                       "Hawaii", 
+                       "DistrictofColumbia",       # remove inconsistent regions
+                       "PuertoRico")) |>
+  mutate(state = str_to_lower(state))              # lowercase to match others
 
-states_sf <- states_sf |>
-  filter(!state %in% c("Alaska", "Hawaii", "DistrictofColumbia", "PuertoRico")) |>
-  mutate(state = str_to_lower(state))
-
-# polisci
-polisci_data <- polisci_data |> 
-  mutate(state = str_squish(state)) |>
-  filter(!state %in% c("Alaska", "Hawaii")) |>
-  mutate(state = str_to_lower(state))
+## polisci
+polisci_data <- polisci_data |>                    
+  mutate(state = str_squish(state)) |>             # no more spaces
+  filter(!state %in% c("Alaska", "Hawaii")) |>     # remove inconsistent regions
+  mutate(state = str_to_lower(state))              # lowercase to match others
 
 ```
 
 ```{r}
 #| echo: false
 #| message: false
-# Merge with states_polygon (static)
+# Merge polisci with states_polygon (for static)
 gg_states <- polisci_data |>
   full_join(states_polygon)
 
 # Check that merge worked for 48 contiguous states
 #   unique(gg_states$state)
 
-# Merge with states_sf (static or interactive)
+# Merge polisci with states_sf (for interactive)
 int_states <- polisci_data |>
   full_join(states_sf)
 
 # Check that merge worked for 48 contiguous states
 #   unique(int_states$state)
 int_states <- st_as_sf(int_states)
+
+# fix capitalization and spacing of states for interactive plot
+int_states <- int_states |> 
+  mutate(state = str_replace(state, "new", "New "),
+         state = str_replace(state, "north", "North "),
+         state = str_replace(state, "south", "South "),
+         state = str_replace(state, "rhode", "Rhode "),
+         state = str_replace(state, "west", "West "),
+         state = str_to_title(state)
+         ) 
 # class(int_states)
 ```
+
+## Motor Vehicle Fatalities Across America
 
 ### Static Map
 
@@ -98,10 +113,11 @@ Here, you can see that Mississippi and Montana had the most car fatalities per 1
 #| echo: false
 gg_states |>
   ggplot(aes(x = long, y = lat, group = group)) +
-  geom_polygon(aes(fill = carfatal07), color = "black") +
+  geom_polygon(aes(fill = carfatal07), color = "black") + 
   coord_map() +
-  scale_fill_viridis() +
-  theme_void() +
+  scale_fill_viridis() +                              # better colors
+  theme_void() +                                      # cleaner theme
+                                                        # removes x and y scale
   labs(fill = "Motor vehicle fatalities per 100,000 pop.",
        caption = "Data from the poliscidata R package",
        title = "Motor vehicle fatalities per 100,000 people in 2007")
@@ -114,31 +130,38 @@ In the interactive version, you can see exactly how many average car fatalities 
 ```{r}
 #| echo: false
 
-bins <- c(0, 5, 10, 15, 20, 25, 30, 35)
+# set bins for fill colors
+bins <- c(0, 5, 10, 15, 20, 25, 30, 35) 
+
+# assigns fill colors to variable
 pal <- colorBin("YlOrRd", domain = int_states$carfatal07, bins = bins)
+
+# create labels
 int_states <- int_states |> 
-  mutate(labels = str_c(str_to_title(state), ": ", carfatal07, " motor vehicle fatalities / 100,000 pop"))
+  mutate(labels = str_c(state, ": ", 
+                        carfatal07, " motor vehicle fatalities / 100,000 pop"))
 labels <- lapply(int_states$labels, HTML)
 
+# leaflet plot
 leaflet(int_states) |>
   setView(-96, 37.8, 4) |>
   addTiles() |>
   addPolygons(
     fillColor = ~pal(carfatal07),
-    weight = 2,
+    weight = 2,                             # editing lines separating states...
     opacity = 1,
     color = "black",
     dashArray = "3",
     fillOpacity = 1,
-    highlightOptions = highlightOptions(
-      weight = 5,
-      color = "red",
+    highlightOptions = highlightOptions(    # options for hovering over states
+      weight = 5,                             # editing hover lines
+      color = "white",
       dashArray = "",
       fillOpacity = 0.7,
-      bringToFront = TRUE),
+      bringToFront = TRUE),                   # brings hover line to front
     label = labels,
     labelOptions = labelOptions(
-      style = list("font-weight" = "normal", padding = "3px 8px"),
+      style = list("font-weight" = "normal", padding = "3px 8px"), # font edits
       textsize = "15px",
       direction = "auto")) |>
   addLegend(pal = pal, values = ~carfatal07, opacity = 0.7, title = NULL,
@@ -171,12 +194,16 @@ You can see a lot of the same information from the static plot in this interacti
 
 ```{r}
 #| echo: false
+
+# fill colors
 colors <- colorFactor(c("red", "purple", "blue"), domain = int_states$cook_index3)
 
+# create labels
 int_states <- int_states |>
   mutate(labels2 = str_c(str_to_title(state), " : ", cook_index3))
 labels2 <- lapply(int_states$labels2, HTML)
 
+# leaflet plot
 leaflet(int_states) |>
   setView(-96, 37.8, 4) |>
   addTiles() |>
@@ -184,11 +211,13 @@ leaflet(int_states) |>
     fillColor = ~colors(cook_index3),
     weight = 2,
     opacity = 1,
-    color = "white",
+    color = "black",
+    dashArray = "3",
     fillOpacity = 0.7,
     highlightOptions = highlightOptions(
       weight = 5,
-      color = "black",
+      color = "lightgrey",
+      dashArray = "",
       bringToFront = TRUE),
     label = labels2,
     labelOptions = labelOptions(
