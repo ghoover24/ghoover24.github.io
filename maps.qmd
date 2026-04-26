@@ -103,7 +103,8 @@ gg_states |>
   scale_fill_viridis() +
   theme_void() +
   labs(fill = "Motor vehicle fatalities per 100,000 pop.",
-       caption = "Data from the poliscidata R package")
+       caption = "Data from the poliscidata R package",
+       title = "Motor vehicle fatalities per 100,000 people in 2007")
 ```
 
 ### Interactive Map
@@ -160,7 +161,8 @@ gg_states |>
   scale_fill_manual(values = c("red", "purple", "blue")) +
   theme_void() +
   labs(fill = "Cook Index",
-       caption = "Data from the poliscidata R package")
+       caption = "Data from the poliscidata R package",
+       title = "Political party lean by state")
 ```
 
 # Interactive Map
